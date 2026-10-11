@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My account — Black Ink Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-page account">
+<div class="auth-bg"></div>
+<a href="/" class="auth-back">← BACK TO SITE</a>
+<main class="auth-card wide" id="account" hidden>
+  <a href="/"><img src="assets/logo-wordmark.png" alt="Black Ink Studios" class="auth-logo"></a>
+  <h1 id="hello">Hello</h1>
+  <p class="sub" id="who"></p>
+  <button class="btn sm ghost" id="logoutBtn" type="button"><span>LOG OUT</span><i class="arrow"></i></button>
+
+  <section>
+    <h2>My enquiries</h2>
+    <div id="mine" class="list"></div>
+  </section>
+
+  <section id="adminBox" hidden>
+    <h2>Admin — all enquiries</h2>
+    <div id="allEnq" class="list"></div>
+    <h2>Admin — registered users</h2>
+    <div id="allUsers" class="list"></div>
+  </section>
+</main>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign up — Black Ink Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-page">
+<div class="auth-bg"></div>
+<a href="/" class="auth-back">← BACK TO SITE</a>
+<main class="auth-card">
+  <a href="/"><img src="assets/logo-wordmark.png" alt="Black Ink Studios" class="auth-logo"></a>
+  <h1>Create your account</h1>
+  <p class="sub">Track your enquiries with Black Ink Studios</p>
+  <form id="authForm" data-mode="signup" novalidate>
+    <label>Full name<input type="text" name="name" autocomplete="name" required></label>
+    <label>Email<input type="email" name="email" autocomplete="email" required></label>
+    <label>Password <small>(min. 8 characters)</small><input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Confirm password<input type="password" name="confirm" autocomplete="new-password" required></label>
+    <div class="form-msg" id="msg" role="alert"></div>
+    <button class="btn" type="submit"><span>SIGN UP</span><i class="arrow"></i></button>
+  </form>
+  <p class="switch">Already have an account? <a href="/login">Log in</a></p>
+</main>
+<script src="js/auth.js"></script>
+</body>
+</html>

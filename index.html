@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Black Ink Studios — 3D Walkthroughs</title>
+<meta name="description" content="Black Ink Studios creates cinematic 3D walkthroughs and architectural visualization.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <img src="assets/logo.png/Black INk Golden PNG.png" alt="" class="loader-logo">
+  <div class="loader-bar"><span id="loaderBar"></span></div>
+  <div class="loader-pct" id="loaderPct">0</div>
+</div>
+
+<header class="header">
+  <button class="pill" id="menuBtn"><i class="burger"></i><span>MENU</span></button>
+  <a href="#top" class="logo" aria-label="Black Ink Studios"><img src="assets/logo-wordmark.png" alt="Black Ink Studios"></a>
+  <a href="#contact" class="pill">ENQUIRE</a>
+</header>
+
+<nav class="menu" id="menu">
+  <button class="menu-close" id="menuClose">CLOSE ✕</button>
+  <img src="assets/logo-wordmark.png" alt="" class="menu-logo">
+  <ul>
+    <li><a href="#exterior">Exteriors</a></li>
+    <li><a href="#interior">Interiors</a></li>
+    <li><a href="#top">Walkthrough</a></li>
+    <li><a href="#overview">Cam Overview</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+  <!-- SCENE 1: long camera walkthrough -->
+  <section class="scene" id="top" data-video="assets/web/walkthrough.mp4" style="height:800vh">
+    <div class="stage">
+      <video class="vid" muted playsinline preload="auto"></video>
+      <div class="shade"></div>
+
+      <div class="hero" id="hero">
+        <h1>REDEFINING<br>VISUAL<br>STORYTELLING</h1>
+        <p>Black Ink Studios crafts cinematic 3D walkthroughs that let you walk through a space before a single brick is laid.</p>
+        <a href="#exterior" class="btn"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+
+      <div class="chapter" data-in="0.14" data-out="0.34">
+        <span class="num">01</span>
+        <h2>Designed to impress</h2>
+        <p>Photoreal landscapes that capture light, greenery and form, giving every project its first great impression.</p>
+        <a href="#exterior" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.38" data-out="0.60">
+        <span class="num">02</span>
+        <h2>Spaces you can feel</h2>
+        <p>Every material, texture and shadow is composed with care, so amenities feel lived in long before they are built.</p>
+        <a href="#interior" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.64" data-out="0.88" id="overview">
+        <span class="num">03</span>
+        <h2>Walk through the vision</h2>
+        <p>Fluid camera journeys from the street to the rooftop, bringing the whole story of a development to life.</p>
+        <a href="#contact" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+
+      <div class="progress-line"><span></span></div>
+      <div class="scroll-hint">(SCROLL TO DISCOVER)</div>
+
+      <div class="stat" id="stat">
+        <div class="stat-num"><span id="statNum">0</span>+</div>
+        <div class="stat-label">Projects visualised</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENE 2: exteriors -->
+  <section class="scene" id="exterior" data-video="assets/web/exterior.mp4" style="height:650vh">
+    <div class="stage">
+      <video class="vid" muted playsinline preload="auto"></video>
+      <div class="shade"></div>
+      <div class="label"><span>EXTERIORS</span></div>
+      <div class="chapter" data-in="0.04" data-out="0.33">
+        <span class="num">01</span>
+        <h2>A welcome worth arriving to</h2>
+        <p>Water features, warm timber and a grand glass entrance that set the tone before you step inside.</p>
+        <a href="#interior" class="btn sm"><span>SEE INTERIORS</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.40" data-out="0.58">
+        <span class="num">02</span>
+        <h2>Balconies made for living</h2>
+        <p>Golden-hour light, warm materials and glass that frame the life of a home from every angle outside.</p>
+        <a href="#interior" class="btn sm"><span>SEE INTERIORS</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.66" data-out="0.96">
+        <span class="num">03</span>
+        <h2>Play, right at home</h2>
+        <p>Lush landscaping and dedicated sports amenities designed to be seen and felt before they are ever built.</p>
+        <a href="#interior" class="btn sm"><span>SEE INTERIORS</span><i class="arrow"></i></a>
+      </div>
+      <div class="progress-line"><span></span></div>
+      <div class="scroll-hint">(SCROLL TO DISCOVER)</div>
+    </div>
+  </section>
+
+  <!-- SCENE 3: interiors -->
+  <section class="scene" id="interior" data-video="assets/web/interior.mp4" style="height:600vh">
+    <div class="stage">
+      <video class="vid" muted playsinline preload="auto"></video>
+      <div class="shade"></div>
+      <div class="label"><span>INTERIORS</span></div>
+      <div class="chapter" data-in="0.04" data-out="0.29">
+        <span class="num">01</span>
+        <h2>Rooms to unwind</h2>
+        <p>Soft textures, layered colour and natural light, styled so every living space feels instantly like home.</p>
+        <a href="#contact" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.36" data-out="0.60">
+        <span class="num">02</span>
+        <h2>Leisure, elevated</h2>
+        <p>Sunlit lounges with crafted timber, patterned screens and room to play, composed down to the last detail.</p>
+        <a href="#contact" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+      <div class="chapter" data-in="0.68" data-out="0.96">
+        <span class="num">03</span>
+        <h2>A grand arrival</h2>
+        <p>A calm, richly lit entrance lobby that sets the tone for the whole building from the first step inside.</p>
+        <a href="#contact" class="btn sm"><span>KNOW MORE</span><i class="arrow"></i></a>
+      </div>
+      <div class="progress-line"><span></span></div>
+      <div class="scroll-hint">(SCROLL TO DISCOVER)</div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <img src="assets/logo.png/Black INk Golden PNG.png" alt="" class="contact-logo">
+    <h2>Let's build your vision</h2>
+    <p>Tell us about your project and we'll bring it to life.</p>
+    <form id="enquiryForm">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <textarea name="message" rows="3" placeholder="Tell us about your project"></textarea>
+      <div class="form-msg" id="enquiryMsg" role="alert"></div>
+      <button class="btn" type="submit"><span>SEND ENQUIRY</span><i class="arrow"></i></button>
+    </form>
+    <footer>© 2026 Black Ink Studios — Redefining Visualization</footer>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

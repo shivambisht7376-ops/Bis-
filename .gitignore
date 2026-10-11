@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# private runtime data: user database + session secret. NEVER commit.
+data/
+.env
+
+# large original source clips (the optimised web versions in assets/web ARE committed)
+assets/video/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+scratch/
