@@ -40,3 +40,7 @@ Serve it over HTTPS on a host that runs Node.
 - Tables are created automatically on first start.
 - `.env` and `data/` are git-ignored. Never commit them.
 - The original 4K source clips live in `assets/video/` and are git-ignored. The web-optimised versions are in `assets/web/`.
+
+## Publishing
+
+Run `deploy.bat "what you changed"` or just `git commit`. Every commit is pushed to GitHub automatically, and Render redeploys on each push.
