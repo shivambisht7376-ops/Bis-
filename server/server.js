@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { DatabaseSync } = require('node:sqlite');
 
 const ROOT = path.join(__dirname, '..');
-const DATA_DIR = path.join(ROOT, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 /* ---------- config ---------- */
@@ -99,6 +99,7 @@ const jsonOnly = (req, res, next) =>
 /* ---------- app ---------- */
 const app = express();
 app.disable('x-powered-by');
+if (IS_PROD) app.set('trust proxy', 1); // hosted behind a reverse proxy (Render, etc.)
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
 app.use(attachUser);
