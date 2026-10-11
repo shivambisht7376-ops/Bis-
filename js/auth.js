@@ -140,3 +140,36 @@ if (enquiryForm) {
     btn.disabled = false;
   });
 }
+
+/* ---------- show/hide password (eye button) on every password field ---------- */
+document.querySelectorAll('input[type="password"]').forEach(input => {
+  const wrap = document.createElement('div');
+  wrap.className = 'pw-wrap';
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'pw-eye';
+  btn.setAttribute('aria-label', 'Show password');
+  btn.setAttribute('aria-pressed', 'false');
+  btn.innerHTML =
+    '<svg class="eye-open" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>' +
+    '<svg class="eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  wrap.appendChild(btn);
+  btn.addEventListener('click', () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.classList.toggle('on', show);
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.setAttribute('aria-pressed', String(show));
+    input.focus({ preventScroll: true });
+  });
+});
+
+/* ---------- header LOGIN pill becomes ACCOUNT when logged in ---------- */
+const headerAuth = document.getElementById('headerAuth');
+if (headerAuth) {
+  api('/api/auth/me').then(({ user }) => {
+    if (user) { headerAuth.href = '/account'; headerAuth.textContent = 'ACCOUNT'; }
+  }).catch(() => {});
+}
