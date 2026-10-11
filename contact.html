@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact us — Black Ink Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-page">
+<div class="auth-bg"></div>
+<a href="/" class="auth-back">← BACK TO SITE</a>
+
+<main class="auth-card wide" id="contactCard">
+  <a href="/"><img src="assets/logo-wordmark.png" alt="Black Ink Studios" class="auth-logo"></a>
+  <h1>Contact us</h1>
+  <p class="sub">Tell us about your project. Your message goes straight to our inbox, and we reply by email.</p>
+
+  <!-- shown when logged out -->
+  <div id="gate" hidden>
+    <div class="item">Please log in to send us a message. It only takes a moment.</div>
+    <div class="gate-actions">
+      <a class="btn sm" id="gateLogin" href="/login?next=/contact"><span>LOG IN</span><i class="arrow"></i></a>
+      <a class="btn sm ghost" id="gateSignup" href="/signup?next=/contact"><span>CREATE ACCOUNT</span><i class="arrow"></i></a>
+    </div>
+  </div>
+
+  <!-- shown when logged in -->
+  <form id="contactForm" novalidate hidden>
+    <div class="row">
+      <label>Your name<input type="text" id="cName" readonly></label>
+      <label>Your email<input type="email" id="cEmail" readonly></label>
+    </div>
+    <label>Subject<input type="text" name="subject" maxlength="120" required placeholder="e.g. 3D walkthrough for a residential tower"></label>
+    <label>Message<textarea name="message" rows="6" maxlength="4000" required placeholder="Describe your project, timeline and what you need"></textarea></label>
+    <div class="form-msg" id="cMsg" role="alert"></div>
+    <button class="btn" type="submit"><span>SEND MESSAGE</span><i class="arrow"></i></button>
+  </form>
+
+  <p class="switch direct">Prefer your own email app? Write to
+    <a href="mailto:shivambisht7376@gmail.com">shivambisht7376@gmail.com</a></p>
+</main>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -167,6 +167,48 @@ app.get('/api/enquiries/mine', requireAuth, wrap(async (req, res) =>
     'SELECT id, message, status, created_at FROM enquiries WHERE user_id = $1 OR email = $2 ORDER BY id DESC',
     [req.user.id, req.user.email]) })));
 
+/* --- contact us: logged-in users email the studio --- */
+const CONTACT_TO = process.env.CONTACT_TO || 'shivambisht7376@gmail.com';
+
+async function sendContactEmail({ user, subject, message }) {
+  const text = `New message from the Black Ink Studios website\n\nFrom: ${user.name} <${user.email}>\nSubject: ${subject}\n\n${message}\n`;
+  const mailSubject = `[Black Ink Studios] ${subject}`;
+
+  if (process.env.RESEND_API_KEY) { // HTTPS email API: works on hosts that block SMTP (e.g. Render free)
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.MAIL_FROM || 'Black Ink Studios <onboarding@resend.dev>',
+        to: [CONTACT_TO], reply_to: user.email, subject: mailSubject, text
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!r.ok) throw new Error(`Resend ${r.status}: ${await r.text()}`);
+    return true;
+  }
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) { // Gmail app password
+    const nodemailer = require('nodemailer');
+    const transport = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+    await transport.sendMail({ from: `"Black Ink Studios" <${process.env.SMTP_USER}>`, to: CONTACT_TO, replyTo: user.email, subject: mailSubject, text });
+    return true;
+  }
+  return false; // email not configured: the message is still saved for the admin
+}
+
+app.post('/api/contact', jsonOnly, requireAuth, rateLimit(5, 10 * 60e3), wrap(async (req, res) => {
+  const subject = clean(req.body.subject, 120).replace(/[\r\n]+/g, ' ');
+  const message = clean(req.body.message, 4000);
+  if (subject.length < 3) return res.status(400).json({ error: 'Please enter a subject.' });
+  if (message.length < 10) return res.status(400).json({ error: 'Please write a little more (at least 10 characters).' });
+  await pool.query('INSERT INTO enquiries (user_id, name, email, message) VALUES ($1,$2,$3,$4)',
+    [req.user.id, req.user.name, req.user.email, `[${subject}] ${message}`]);
+  let emailed = false;
+  try { emailed = await sendContactEmail({ user: req.user, subject, message }); }
+  catch (e) { console.error('Contact email failed:', e.message); }
+  res.status(201).json({ ok: true, emailed });
+}));
+
 /* --- admin --- */
 app.get('/api/admin/enquiries', requireAuth, requireAdmin, wrap(async (_req, res) =>
   res.json({ enquiries: await many('SELECT * FROM enquiries ORDER BY id DESC') })));
@@ -185,7 +227,7 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 
 /* --- static site (only public folders; never data/ or server/) --- */
 ['assets', 'css', 'js'].forEach(d => app.use('/' + d, express.static(path.join(ROOT, d), { maxAge: IS_PROD ? '7d' : 0 })));
-['index', 'login', 'signup', 'account'].forEach(p =>
+['index', 'login', 'signup', 'account', 'contact'].forEach(p =>
   app.get(p === 'index' ? ['/', '/index.html'] : [`/${p}`, `/${p}.html`], (_req, res) => res.sendFile(path.join(ROOT, `${p}.html`))));
 app.use((_req, res) => res.status(404).send('Not found'));
 

@@ -15,12 +15,20 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const fmt = d => new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
 /* ---------- login / signup form ---------- */
+// where to go after authenticating: only same-site paths (blocks open redirects)
+const nextUrl = (() => {
+  const n = new URLSearchParams(location.search).get('next');
+  return n && /^\/[A-Za-z0-9_\-\/]*$/.test(n) ? n : '/account';
+})();
 const authForm = document.getElementById('authForm');
 if (authForm) {
   const msg = document.getElementById('msg');
   const mode = authForm.dataset.mode;
-  // already logged in? go to account
-  api('/api/auth/me').then(d => { if (d.user) location.replace('/account'); }).catch(() => {});
+  // keep ?next= when switching between login and signup
+  const sw = document.querySelector('.switch a');
+  if (sw && nextUrl !== '/account') sw.href += '?next=' + encodeURIComponent(nextUrl);
+  // already logged in? go on
+  api('/api/auth/me').then(d => { if (d.user) location.replace(nextUrl); }).catch(() => {});
 
   authForm.addEventListener('submit', async e => {
     e.preventDefault();
@@ -31,8 +39,40 @@ if (authForm) {
     try {
       await api(`/api/auth/${mode}`, 'POST', { name: f.name, email: f.email, password: f.password });
       msg.classList.add('ok'); msg.textContent = 'Success — redirecting…';
-      setTimeout(() => location.assign('/account'), 500);
+      setTimeout(() => location.assign(nextUrl), 500);
     } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+  });
+}
+
+/* ---------- contact page (login required) ---------- */
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+  const gate = document.getElementById('gate');
+  const msg = document.getElementById('cMsg');
+  api('/api/auth/me').then(({ user }) => {
+    if (!user) { gate.hidden = false; return; }
+    document.getElementById('cName').value = user.name;
+    document.getElementById('cEmail').value = user.email;
+    contactForm.hidden = false;
+  }).catch(() => { gate.hidden = false; });
+
+  contactForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    msg.className = 'form-msg'; msg.textContent = '';
+    const btn = contactForm.querySelector('button'); btn.disabled = true;
+    try {
+      const f = Object.fromEntries(new FormData(contactForm));
+      const r = await api('/api/contact', 'POST', { subject: f.subject, message: f.message });
+      msg.classList.add('ok');
+      msg.textContent = r.emailed
+        ? 'Thank you! Your message was emailed to us. We will reply to your email soon.'
+        : 'Thank you! Your message has been received. We will reply to your email soon.';
+      contactForm.reset();
+    } catch (err) {
+      msg.textContent = err.message;
+      if (/log in/i.test(err.message)) gate.hidden = false;
+    }
+    btn.disabled = false;
   });
 }
 
