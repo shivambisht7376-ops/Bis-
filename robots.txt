@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /account
+Sitemap: https://bis-e2dt.onrender.com/sitemap.xml
