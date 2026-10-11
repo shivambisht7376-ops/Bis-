@@ -12,7 +12,7 @@ const api = async (url, method = 'GET', body) => {
   return data;
 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = d => new Date(d.replace(' ', 'T') + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+const fmt = d => new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
 /* ---------- login / signup form ---------- */
 const authForm = document.getElementById('authForm');
@@ -45,7 +45,7 @@ if (accountEl) {
     if (!user) return location.replace('/login');
     accountEl.hidden = false;
     document.getElementById('hello').textContent = `Hello, ${user.name.split(' ')[0]}`;
-    document.getElementById('who').textContent = `${user.email} · ${user.role === 'admin' ? 'Administrator' : 'Member'} since ${new Date(user.created_at.replace(' ', 'T') + 'Z').toLocaleDateString()}`;
+    document.getElementById('who').textContent = `${user.email} · ${user.role === 'admin' ? 'Administrator' : 'Member'} since ${new Date(user.created_at).toLocaleDateString()}`;
 
     const { enquiries } = await api('/api/enquiries/mine');
     document.getElementById('mine').innerHTML = enquiries.length

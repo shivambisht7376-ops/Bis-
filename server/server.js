@@ -5,11 +5,9 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { DatabaseSync } = require('node:sqlite');
+const { Pool } = require('pg');
 
 const ROOT = path.join(__dirname, '..');
-const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
-fs.mkdirSync(DATA_DIR, { recursive: true });
 
 /* ---------- config ---------- */
 const PORT = process.env.PORT || 8080;
@@ -17,52 +15,56 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE = 'bis_session';
 const SESSION_DAYS = 7;
 
-// persistent random secret unless JWT_SECRET is supplied
+if (!process.env.DATABASE_URL) {
+  console.error('\nDATABASE_URL is not set.\nPut your Neon connection string in a .env file (see .env.example) or in the host\'s environment variables.\n');
+  process.exit(1);
+}
+
+// persistent random secret unless JWT_SECRET is supplied (set JWT_SECRET on hosted servers)
 let SECRET = process.env.JWT_SECRET;
 if (!SECRET) {
-  const f = path.join(DATA_DIR, '.secret');
+  const dir = path.join(ROOT, 'data');
+  fs.mkdirSync(dir, { recursive: true });
+  const f = path.join(dir, '.secret');
   if (!fs.existsSync(f)) fs.writeFileSync(f, crypto.randomBytes(48).toString('hex'));
   SECRET = fs.readFileSync(f, 'utf8');
 }
 
-/* ---------- database ---------- */
-const db = new DatabaseSync(path.join(DATA_DIR, 'blackink.db'));
-db.exec(`
-  PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS enquiries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    message TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'new',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-`);
+/* ---------- database (Postgres / Neon) ---------- */
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5, idleTimeoutMillis: 30000 });
+pool.on('error', err => console.error('Postgres pool error:', err.message));
 
-const q = {
-  userByEmail: db.prepare('SELECT * FROM users WHERE email = ?'),
-  userById: db.prepare('SELECT id,name,email,role,created_at FROM users WHERE id = ?'),
-  userCount: db.prepare('SELECT COUNT(*) AS n FROM users'),
-  insertUser: db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)'),
-  insertEnquiry: db.prepare('INSERT INTO enquiries (user_id,name,email,message) VALUES (?,?,?,?)'),
-  myEnquiries: db.prepare('SELECT id,message,status,created_at FROM enquiries WHERE user_id = ? OR email = ? ORDER BY id DESC'),
-  allEnquiries: db.prepare('SELECT * FROM enquiries ORDER BY id DESC'),
-  allUsers: db.prepare('SELECT id,name,email,role,created_at FROM users ORDER BY id DESC'),
-  setStatus: db.prepare('UPDATE enquiries SET status = ? WHERE id = ?')
-};
+const one = async (sql, params) => (await pool.query(sql, params)).rows[0] || null;
+const many = async (sql, params) => (await pool.query(sql, params)).rows;
+
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS enquiries (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      message TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'new',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`);
+}
+
+const PUBLIC_USER = 'id, name, email, role, created_at';
 
 /* ---------- helpers ---------- */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const clean = (s, max) => String(s ?? '').trim().slice(0, max);
+const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 function setSession(res, user) {
   const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: `${SESSION_DAYS}d` });
@@ -71,12 +73,15 @@ function setSession(res, user) {
     maxAge: SESSION_DAYS * 864e5, path: '/'
   });
 }
-function currentUser(req) {
+async function currentUser(req) {
   const t = req.cookies[COOKIE];
   if (!t) return null;
-  try { return q.userById.get(jwt.verify(t, SECRET).id) || null; } catch { return null; }
+  try {
+    const { id } = jwt.verify(t, SECRET);
+    return await one(`SELECT ${PUBLIC_USER} FROM users WHERE id = $1`, [id]);
+  } catch { return null; }
 }
-const attachUser = (req, _res, next) => { req.user = currentUser(req); next(); };
+const attachUser = wrap(async (req, _res, next) => { req.user = await currentUser(req); next(); });
 const requireAuth = (req, res, next) =>
   req.user ? next() : res.status(401).json({ error: 'Please log in first.' });
 const requireAdmin = (req, res, next) =>
@@ -102,64 +107,79 @@ app.disable('x-powered-by');
 if (IS_PROD) app.set('trust proxy', 1); // hosted behind a reverse proxy (Render, etc.)
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
-app.use(attachUser);
 app.use((_, res, next) => {
   res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN', 'Referrer-Policy': 'same-origin' });
   next();
 });
+app.use('/api', attachUser); // only API calls hit the database for the session
 
 /* --- auth --- */
-app.post('/api/auth/signup', jsonOnly, rateLimit(8, 15 * 60e3), (req, res) => {
+app.post('/api/auth/signup', jsonOnly, rateLimit(8, 15 * 60e3), wrap(async (req, res) => {
   const name = clean(req.body.name, 80);
   const email = clean(req.body.email, 160).toLowerCase();
   const password = String(req.body.password ?? '');
   if (name.length < 2) return res.status(400).json({ error: 'Please enter your name.' });
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
   if (password.length < 8 || password.length > 100) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-  if (q.userByEmail.get(email)) return res.status(409).json({ error: 'An account with this email already exists.' });
+  if (await one('SELECT 1 FROM users WHERE email = $1', [email])) return res.status(409).json({ error: 'An account with this email already exists.' });
 
-  const role = q.userCount.get().n === 0 ? 'admin' : 'user'; // first account is the admin
-  const info = q.insertUser.run(name, email, bcrypt.hashSync(password, 11), role);
-  const user = q.userById.get(Number(info.lastInsertRowid));
+  const { n } = await one('SELECT COUNT(*)::int AS n FROM users');
+  const role = n === 0 ? 'admin' : 'user'; // first account is the admin
+  let user;
+  try {
+    user = await one(
+      `INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,$4) RETURNING ${PUBLIC_USER}`,
+      [name, email, bcrypt.hashSync(password, 11), role]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'An account with this email already exists.' });
+    throw e;
+  }
   setSession(res, user);
   res.status(201).json({ user });
-});
+}));
 
-app.post('/api/auth/login', jsonOnly, rateLimit(10, 15 * 60e3), (req, res) => {
+app.post('/api/auth/login', jsonOnly, rateLimit(10, 15 * 60e3), wrap(async (req, res) => {
   const email = clean(req.body.email, 160).toLowerCase();
   const password = String(req.body.password ?? '');
-  const row = q.userByEmail.get(email);
+  const row = await one('SELECT * FROM users WHERE email = $1', [email]);
   if (!row || !bcrypt.compareSync(password, row.password_hash))
     return res.status(401).json({ error: 'Incorrect email or password.' });
   setSession(res, row);
-  res.json({ user: q.userById.get(row.id) });
-});
+  res.json({ user: await one(`SELECT ${PUBLIC_USER} FROM users WHERE id = $1`, [row.id]) });
+}));
 
 app.post('/api/auth/logout', (_req, res) => { res.clearCookie(COOKIE, { path: '/' }); res.json({ ok: true }); });
 app.get('/api/auth/me', (req, res) => res.json({ user: req.user }));
 
 /* --- enquiries --- */
-app.post('/api/enquiries', jsonOnly, rateLimit(6, 10 * 60e3), (req, res) => {
+app.post('/api/enquiries', jsonOnly, rateLimit(6, 10 * 60e3), wrap(async (req, res) => {
   const name = clean(req.body.name, 80) || req.user?.name || '';
   const email = (clean(req.body.email, 160) || req.user?.email || '').toLowerCase();
   const message = clean(req.body.message, 2000);
   if (name.length < 2) return res.status(400).json({ error: 'Please enter your name.' });
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
-  q.insertEnquiry.run(req.user?.id ?? null, name, email, message);
+  await pool.query('INSERT INTO enquiries (user_id, name, email, message) VALUES ($1,$2,$3,$4)',
+    [req.user?.id ?? null, name, email, message]);
   res.status(201).json({ ok: true });
-});
-app.get('/api/enquiries/mine', requireAuth, (req, res) =>
-  res.json({ enquiries: q.myEnquiries.all(req.user.id, req.user.email) }));
+}));
+app.get('/api/enquiries/mine', requireAuth, wrap(async (req, res) =>
+  res.json({ enquiries: await many(
+    'SELECT id, message, status, created_at FROM enquiries WHERE user_id = $1 OR email = $2 ORDER BY id DESC',
+    [req.user.id, req.user.email]) })));
 
 /* --- admin --- */
-app.get('/api/admin/enquiries', requireAuth, requireAdmin, (_req, res) => res.json({ enquiries: q.allEnquiries.all() }));
-app.get('/api/admin/users', requireAuth, requireAdmin, (_req, res) => res.json({ users: q.allUsers.all() }));
-app.patch('/api/admin/enquiries/:id', jsonOnly, requireAuth, requireAdmin, (req, res) => {
+app.get('/api/admin/enquiries', requireAuth, requireAdmin, wrap(async (_req, res) =>
+  res.json({ enquiries: await many('SELECT * FROM enquiries ORDER BY id DESC') })));
+app.get('/api/admin/users', requireAuth, requireAdmin, wrap(async (_req, res) =>
+  res.json({ users: await many(`SELECT ${PUBLIC_USER} FROM users ORDER BY id DESC`) })));
+app.patch('/api/admin/enquiries/:id', jsonOnly, requireAuth, requireAdmin, wrap(async (req, res) => {
   const status = ['new', 'contacted', 'closed'].includes(req.body.status) ? req.body.status : null;
   if (!status) return res.status(400).json({ error: 'Invalid status.' });
-  q.setStatus.run(status, Number(req.params.id));
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+  await pool.query('UPDATE enquiries SET status = $1 WHERE id = $2', [status, id]);
   res.json({ ok: true });
-});
+}));
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 
@@ -169,4 +189,16 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
   app.get(p === 'index' ? ['/', '/index.html'] : [`/${p}`, `/${p}.html`], (_req, res) => res.sendFile(path.join(ROOT, `${p}.html`))));
 app.use((_req, res) => res.status(404).send('Not found'));
 
-app.listen(PORT, () => console.log(`Black Ink Studios running at http://localhost:${PORT}`));
+// central error handler: never leak internals
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Server error. Please try again.' });
+});
+
+/* ---------- start ---------- */
+const start = async () => {
+  await initDb();
+  app.listen(PORT, () => console.log(`Black Ink Studios running at http://localhost:${PORT}`));
+};
+if (require.main === module) start().catch(e => { console.error('Failed to start:', e.message); process.exit(1); });
+module.exports = { app, initDb, pool };
