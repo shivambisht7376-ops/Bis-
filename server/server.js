@@ -228,7 +228,7 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 /* --- static site (only public folders; never data/ or server/) --- */
 ['robots.txt', 'sitemap.xml'].forEach(f => app.get('/' + f, (_req, res) => res.sendFile(path.join(ROOT, f))));
 ['assets', 'css', 'js'].forEach(d => app.use('/' + d, express.static(path.join(ROOT, d), { maxAge: IS_PROD ? '7d' : 0 })));
-['index', 'login', 'signup', 'account', 'contact'].forEach(p =>
+['index', 'login', 'signup', 'account', 'contact', 'about', 'careers'].forEach(p =>
   app.get(p === 'index' ? ['/', '/index.html'] : [`/${p}`, `/${p}.html`], (_req, res) => res.sendFile(path.join(ROOT, `${p}.html`))));
 app.use((_req, res) => res.status(404).send('Not found'));
 
