@@ -6,6 +6,7 @@ const win = (p, a, b) => Math.min(clamp01((p - a) / FADE), clamp01((b - p) / FAD
 
 /* ---------- smooth scroll ---------- */
 const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
+window.lenis = lenis;
 lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add(t => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);

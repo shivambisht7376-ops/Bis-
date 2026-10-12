@@ -37,3 +37,42 @@
 .role a{font-size:11px;letter-spacing:.18em;padding:11px 20px;border:1px solid var(--gold);border-radius:99px;color:var(--gold);white-space:nowrap}
 .role a:hover{background:var(--gold);color:#101010}
 @media(max-width:600px){.sec{padding:80px 6vw}.role{flex-direction:column;align-items:flex-start}}
+
+/* service gallery */
+.svc{cursor:pointer;position:relative}
+.svc:focus-visible{outline:1px solid var(--gold);outline-offset:-3px}
+.svc-more{display:block;margin-top:22px;font-size:11px;letter-spacing:.22em;color:var(--gold);opacity:.55;transition:.3s}
+.svc:hover .svc-more{opacity:1;transform:translateX(4px)}
+.gal-lock{overflow:hidden}
+.gal{position:fixed;inset:0;z-index:200;background:rgba(8,8,8,.92);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:3vh 3vw;opacity:0;pointer-events:none;transition:opacity .4s;overflow-y:auto}
+.gal.open{opacity:1;pointer-events:auto}
+.gal-box{position:relative;width:min(1100px,100%);margin:auto}
+.gal-close{position:absolute;top:0;right:0;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:9px 18px;font:500 11px 'Manrope';letter-spacing:.16em;cursor:pointer;z-index:3}
+.gal-close:hover{border-color:var(--gold);color:var(--gold)}
+.gal-head{padding-right:110px;margin-bottom:18px}
+.gal-n{font-size:12px;letter-spacing:.28em;color:var(--gold)}
+.gal-title{font-family:var(--display);font-weight:200;font-size:clamp(26px,4vw,46px);text-transform:uppercase;letter-spacing:.03em;margin:6px 0}
+.gal-desc{font-size:14px;line-height:1.6;color:rgba(255,255,255,.65);max-width:700px}
+.gal-stage{position:relative;background:#000;border-radius:6px;overflow:hidden;aspect-ratio:16/9;max-height:62vh;margin:0 auto}
+.gal-item{width:100%;height:100%;object-fit:cover;display:block}
+.gal-cap{font-size:12px;letter-spacing:.14em;color:rgba(255,255,255,.6);margin:12px 0;min-height:16px}
+.gal-thumbs{display:flex;gap:10px;flex-wrap:wrap}
+.gal-thumbs button{flex:1;min-width:130px;text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:6px;color:#fff;padding:12px 14px;cursor:pointer;font-family:'Manrope';transition:.3s}
+.gal-thumbs button b{font-weight:500;color:var(--gold);font-size:12px;letter-spacing:.2em;margin-right:10px}
+.gal-thumbs button span{font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.gal-thumbs button em{display:block;font-style:normal;font-size:10px;letter-spacing:.16em;color:rgba(255,255,255,.5);margin-top:4px;text-transform:uppercase}
+.gal-thumbs button:hover,.gal-thumbs button.on{border-color:var(--gold);background:rgba(212,173,90,.1)}
+/* before/after slider */
+.ba{--p:50%;position:relative;width:100%;height:100%;cursor:ew-resize;touch-action:pan-y;user-select:none;outline:none}
+.ba .a-layer,.ba .b-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.ba .b-layer.clip{clip-path:inset(0 calc(100% - var(--p)) 0 0)}
+.clay{filter:grayscale(1) contrast(1.25) brightness(1.15) sepia(.1)}
+.ba-handle{position:absolute;top:0;bottom:0;left:var(--p);width:2px;background:#fff;transform:translateX(-1px);pointer-events:none}
+.ba-handle i{position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:rgba(16,16,16,.75);border:1.5px solid #fff;backdrop-filter:blur(4px)}
+.ba-handle i::before,.ba-handle i::after{content:"";position:absolute;top:50%;width:7px;height:7px;border-top:2px solid #fff;border-left:2px solid #fff;margin-top:-4px}
+.ba-handle i::before{left:11px;transform:rotate(-45deg)}.ba-handle i::after{right:11px;transform:rotate(135deg)}
+.ba-tag{position:absolute;top:14px;font-size:10px;letter-spacing:.22em;padding:6px 12px;border-radius:99px;background:rgba(16,16,16,.7);pointer-events:none}
+.ba-tag.b{left:14px}.ba-tag.a{right:14px;color:var(--gold)}
+.ba-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.24em;background:rgba(16,16,16,.7);padding:6px 14px;border-radius:99px;pointer-events:none;transition:opacity .4s}
+.ba.used .ba-hint{opacity:0}
+@media(max-width:600px){.gal-head{padding-right:0;padding-top:46px}.gal-stage{aspect-ratio:4/3}}
